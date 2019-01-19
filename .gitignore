@@ -7,3 +7,8 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
+/.buildpath
+/.project
+/.settings/
+/composer.lock
+/symfony.lock
