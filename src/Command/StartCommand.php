@@ -18,8 +18,7 @@ class StartCommand extends Command
     {
         $this
             ->setDescription('Add a short description for your command')
-            ->addArgument('server_ip', InputArgument::REQUIRED, 'Server Ip')
-            ->addArgument('start_page', InputArgument::REQUIRED, 'Start Page')
+            ->addArgument('config', InputArgument::REQUIRED, 'Yaml Configuration File')
             ->addOption('option1', null, InputOption::VALUE_NONE, 'Option description')
         ;
     }
@@ -27,15 +26,11 @@ class StartCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
-        $arg1 = $input->getArgument('server_ip');
-        $arg2 = $input->getArgument('start_page');
+        $arg1 = $input->getArgument('config');
         
-        if ($arg1 && $arg2) {
-            
-            $service = new StartService($arg1, $arg2);
-            $service->runService();
-            
+        if ($arg1) {
             $io->note(sprintf('You passed an argument: %s', $arg1));
+            (new StartService($arg1))->runService();
         }
 
         if ($input->getOption('option1')) {

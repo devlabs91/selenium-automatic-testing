@@ -19,6 +19,16 @@ Quick setup guide for running Selenium on Windows 10 in virtualbox.
 
 Now, your VM should be ready and auto start Selenium. Note the IP of the Server, once it start up, and you can proceede to test.
 
-./bin/console app:start 192.168.0.100 https://www.bing.com
+Create a start.yaml file with minimum configuration :
+
+start:
+    servers:
+        - '192.168.1.119'
+    page: 'https://www.bing.com/search?q=selenium'
+    elements: 
+        - '//*[@id="b_results"]/li[13]/nav/ul/li[7]/a'
+        - '//*[@id="b_results"]/li[14]/nav/ul/li[8]/a'
+
+./bin/console app:start start.yaml
 
 This should launch the app, and open https://www.bing.com in IE.
