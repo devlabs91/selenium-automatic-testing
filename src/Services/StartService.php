@@ -7,6 +7,8 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\Remote\RemoteWebElement;
 use Symfony\Component\Yaml\Yaml;
+use App\Entity\Log;
+use Doctrine\Common\Persistence\ManagerRegistry;
 
 class StartService {
     
@@ -19,7 +21,12 @@ class StartService {
     public $servers;
     public $elements;
     
-    public function __construct( $fileName ) {
+    /** @var ManagerRegistry */
+    public $doctrine;
+    
+    public function __construct( ManagerRegistry $doctrine, $fileName ) {
+        
+        $this->doctrine = $doctrine;
         
         $content = file_get_contents( getcwd()."/".$fileName );
         $value = Yaml::parse($content);
@@ -53,6 +60,7 @@ class StartService {
             try {
                 $element = $this->findElementByXpath( $this->elements[0] );
                 if($element) {
+                    $this->logPage( $this->driver->getCurrentURL() );
                     $this->scrollToElement( $element );
                     try {
                         $element->click();
@@ -79,6 +87,16 @@ class StartService {
             }
         }
         $this->driver->close();
+    }
+    
+    public function logPage( $url ) {
+        $log = new Log();
+        $log->setCreatedAt( new \DateTime() );
+        $log->setPage( $url );
+        $log->setHost( $this->servers[0] );
+        $log->setIp( $this->servers[0] );
+        $this->doctrine->getManager()->persist( $log );
+        $this->doctrine->getManager()->flush();
     }
     
     public function findElementByXpath( $xPath ) {

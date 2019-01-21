@@ -19,6 +19,20 @@ Quick setup guide for running Selenium on Windows 10 in virtualbox.
 
 Now, your VM should be ready and auto start Selenium. Note the IP of the Server, once it start up, and you can proceede to test.
 
+Configure a mysql database called : selenium
+make sure to use collation: utf8mb4_unicode_ci
+
+and a user with name : selenium
+and password : selenium
+
+it should be conectable using the string in the .env file.
+
+DATABASE_URL=mysql://selenium:selenium@127.0.0.1:3306/selenium
+
+Initialize the database by :
+
+./bin/console doctrine:schema:update --force
+
 Create a start.yaml file with minimum configuration :
 
 start:
@@ -31,4 +45,4 @@ start:
 
 ./bin/console app:start start.yaml
 
-This should launch the app, and open https://www.bing.com in IE.
+This should launch the app, and open https://www.bing.com in IE, you should see a log in your database.

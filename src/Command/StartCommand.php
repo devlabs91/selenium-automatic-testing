@@ -9,11 +9,20 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use App\Services\StartService;
+use Doctrine\Common\Persistence\ManagerRegistry;
 
 class StartCommand extends Command
 {
     protected static $defaultName = 'app:start';
 
+    /** @var ManagerRegistry */
+    public $doctrine;
+    
+    public function __construct( ManagerRegistry $doctrine ) {
+        parent::__construct();
+        $this->doctrine = $doctrine;
+    }
+    
     protected function configure()
     {
         $this
@@ -30,7 +39,7 @@ class StartCommand extends Command
         
         if ($arg1) {
             $io->note(sprintf('You passed an argument: %s', $arg1));
-            (new StartService($arg1))->runService();
+            (new StartService( $this->doctrine, $arg1))->runService();
         }
 
         if ($input->getOption('option1')) {
