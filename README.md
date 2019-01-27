@@ -59,3 +59,11 @@ start:
         ip: '192.168.56.1'
         port: '8080'
 
+Advanced Tips
+-------------
+
+Limit Virtualbox internet access when setup by adding a network adapter (Global Tools), with a DHCP server. Use this network for the instance you are creating, this will allow you to install Windows, without internet access, it will reduce size of the Instance you are creating, by not downloading any updates.
+
+Once you are setup, clone the instance, and never start the original instance again, then use a proxy for internet access, this way you can delete the clone once you are done with it. This reduces usage of disk space.
+
+Original instance will use around 8GB of disk space, and each clone uses roughly 3 to 4 GB of disk space for a couple of hours worth of work.
