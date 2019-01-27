@@ -21,6 +21,8 @@ class StartService {
     public $servers;
     public $elements;
     
+    public $proxy;
+    
     /** @var ManagerRegistry */
     public $doctrine;
     
@@ -36,14 +38,29 @@ class StartService {
         $this->servers = $value['start']['servers'];
         $this->elements = $value['start']['elements'];
         
+        if(key_exists('proxy', $value['start'])) {
+            $this->proxy = $value['start']['proxy'];
+        }
+        
         return $this;
     }
 
     public function init() {
+        
         $dc = DesiredCapabilities::internetExplorer();
         $dc->setCapability('ie.ensureCleanSession', true);
         $dc->setCapability('initialBrowserUrl', 'about:blank');
-        $this->driver = RemoteWebDriver::create( $this->host, $dc, 3600000 );
+        $dc->setCapability('timeouts', [
+            'implicit' => 0, 'pageLoad' => 600000, 'script' => 60000
+        ]);
+        if($this->proxy) {
+            $dc->setCapability('proxy', [
+                'proxyType' => 'manual',
+                'httpProxy' => $this->proxy['ip'].':'.$this->proxy['port'],
+                'sslProxy' => $this->proxy['ip'].':'.$this->proxy['port'],
+            ] );
+        }
+        $this->driver = RemoteWebDriver::create( $this->host, $dc, 3600000, 120000 );
     }
     
     public function getStartPage() {

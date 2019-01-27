@@ -37,7 +37,7 @@ Create a start.yaml file with minimum configuration :
 
 start:
     servers:
-        - '192.168.1.119'
+        - '192.168.56.100'
     page: 'https://www.bing.com/search?q=selenium'
     elements: 
         - '//*[@id="b_results"]/li[13]/nav/ul/li[7]/a'
@@ -46,3 +46,16 @@ start:
 ./bin/console app:start start.yaml
 
 This should launch the app, and open https://www.bing.com in IE, you should see a log in your database.
+
+Proxy Server
+------------
+
+Add config for proxy under :
+
+start:
+    servers:
+        - '192.168.56.100'
+    proxy:
+        ip: '192.168.56.1'
+        port: '8080'
+
