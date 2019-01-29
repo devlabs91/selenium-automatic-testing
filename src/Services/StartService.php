@@ -21,6 +21,8 @@ class StartService {
     public $servers;
     public $elements;
     
+    public $views;
+    
     public $proxy;
     
     /** @var ManagerRegistry */
@@ -40,6 +42,10 @@ class StartService {
         
         if(key_exists('proxy', $value['start'])) {
             $this->proxy = $value['start']['proxy'];
+        }
+
+        if(key_exists('views', $value['start'])) {
+            $this->views = $value['start']['views'];
         }
         
         return $this;
@@ -72,7 +78,10 @@ class StartService {
         $this->init();
         $this->getStartPage();
         
-        $error = 0;
+        $error = 0;$views = null;$visited = 0;
+        if( $this->views ) {
+            $views = rand( $this->views['min'], $this->views['max'] );
+        }
         while(1) {
             try {
                 $element = $this->findElementByXpath( $this->elements[0] );
@@ -80,7 +89,14 @@ class StartService {
                     $this->logPage( $this->driver->getCurrentURL() );
                     $this->scrollToElement( $element );
                     try {
-                        $element->click();
+                        if($views && $visited>$views) {
+                            $views = rand( $this->views['min'], $this->views['max'] );
+                            if( $this->driver ) { $this->driver->close(); }
+                            $this->init();
+                            $this->getStartPage();
+                        } else {
+                            $element->click();$visited++;
+                        }
                         $error = 0;
                     } catch (\Throwable $e) {
                         echo($e->getMessage().PHP_EOL);
