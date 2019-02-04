@@ -2,18 +2,18 @@
 
 namespace App\Command;
 
+use App\Services\VboxmanageService;
+use Doctrine\Common\Persistence\ManagerRegistry;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use App\Services\StartService;
-use Doctrine\Common\Persistence\ManagerRegistry;
 
-class StartCommand extends Command
+class VboxmanageCommand extends Command
 {
-    protected static $defaultName = 'app:start';
+    protected static $defaultName = 'app:vboxmanage';
 
     /** @var ManagerRegistry */
     public $doctrine;
@@ -26,10 +26,14 @@ class StartCommand extends Command
     protected function configure()
     {
         $this
-            ->setDescription('Add a short description for your command')
+            ->setDescription('Vboxmanage command')
             ->addArgument('config', InputArgument::REQUIRED, 'Yaml Configuration File')
-            ->addOption('option1', null, InputOption::VALUE_NONE, 'Option description')
-        ;
+            ->addOption('start', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
+            ->addOption('stop', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
+            ->addOption('remove', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
+            ->addOption('spawn')
+            ->addOption('respawn', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
+            ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -39,13 +43,9 @@ class StartCommand extends Command
         
         if ($arg1) {
             $io->note(sprintf('You passed an argument: %s', $arg1));
-            (new StartService( $this->doctrine, $arg1))->runService();
+            (new VboxmanageService( $this->doctrine, $arg1 ))->runService( $input->getOption('start'), $input->getOption('stop'), $input->getOption('remove'), $input->getOption('spawn'), $input->getOption('respawn') );
         }
 
-        if ($input->getOption('option1')) {
-            // ...
-        }
-
-        $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
+        $io->success('done.');
     }
 }

@@ -60,13 +60,26 @@ class StartService {
             'implicit' => 0, 'pageLoad' => 600000, 'script' => 60000
         ]);
         if($this->proxy) {
-            $dc->setCapability('proxy', [
-                'proxyType' => 'manual',
-                'httpProxy' => $this->proxy['ip'].':'.$this->proxy['port'],
-                'sslProxy' => $this->proxy['ip'].':'.$this->proxy['port'],
-            ] );
+            $proxy = [
+                'proxyType' => 'manual'
+            ];
+            if(key_exists('type', $this->proxy) && $this->proxy['type']=='socks') {
+                $proxy['socksProxy'] = $this->proxy['ip'].':'.$this->proxy['port'];
+            } else {
+                $proxy['httpProxy'] = $this->proxy['ip'].':'.$this->proxy['port'];
+                $proxy['sslProxy'] = $this->proxy['ip'].':'.$this->proxy['port'];
+            }
+            $dc->setCapability('proxy', $proxy );
         }
-        $this->driver = RemoteWebDriver::create( $this->host, $dc, 3600000, 120000 );
+        while(1) {
+            try {
+                $this->driver = RemoteWebDriver::create( $this->host, $dc, 3600000, 120000 );
+            } catch ( \Exception $e ) {
+                echo($e->getMessage());
+            }
+            if($this->driver) { break; }
+            sleep(2);
+        }
     }
     
     public function getStartPage() {
@@ -86,11 +99,11 @@ class StartService {
             try {
                 $element = $this->findElementByXpath( $this->elements[0] );
                 if($element) {
-                    $this->logPage( $this->driver->getCurrentURL() );
+                    $this->logPage( $this->driver->getCurrentURL(), $views, $visited );
                     $this->scrollToElement( $element );
                     try {
                         if($views && $visited>$views) {
-                            $views = rand( $this->views['min'], $this->views['max'] );
+                            $views = rand( $this->views['min'], $this->views['max'] );$visited=0;
                             if( $this->driver ) { $this->driver->close(); }
                             $this->init();
                             $this->getStartPage();
@@ -122,12 +135,14 @@ class StartService {
         $this->driver->close();
     }
     
-    public function logPage( $url ) {
+    public function logPage( $url, $views, $visited ) {
         $log = new Log();
         $log->setCreatedAt( new \DateTime() );
         $log->setPage( $url );
         $log->setHost( $this->servers[0] );
         $log->setIp( $this->servers[0] );
+        $log->setViews( $views );
+        $log->setVisited( $visited );
         $this->doctrine->getManager()->persist( $log );
         $this->doctrine->getManager()->flush();
     }
