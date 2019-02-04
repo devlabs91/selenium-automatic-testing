@@ -26,15 +26,33 @@ Quick setup guide for running Selenium on Windows 10 in virtualbox.
 1. Download and install latest version of virtualbox for your OS.
 2. Download and the Windows 10 iso available from microsoft.
 2.1. Create a virtual machine named 'Windows 10 Master'.
-2.2. Create a host only interface, and make sure to set 'Windows 10 Master' to use this interface only.
-3. Install Windows 10, make sure to create account "User", without any password.
+2.2. Create a host only interface, add a DHCP server to the interface, and make sure to set 'Windows 10 Master' to use this interface only.
+2.3. Install Windows 10, make sure to create account "User", without any password.
+    
+    8.6G    /Users/user/VirtualBox VMs/Windows 10 Master
+    
+2.4. Once installed create a clone that we will use as base called 'Windows 10 Base'.
+
+    2.1M    /Users/user/VirtualBox VMs/Windows 10 Base
+
 4. Attach the 'resources/iso/selenium.iso'
-3. Copy the Selenium folder in the iso to the Desktop.
-4. Download and Install Java JDK 11.0.2 from the iso.
-4.1. Optional, install Firefox Setup 65.0 from the iso.
+4.1. Install Java JDK 11.0.2 from the iso.
+4.2. Optional, install Firefox Setup 65.0 from the iso.
+5. Copy the Selenium folder in the iso to the Desktop.
 5. Disable UAC
 6. Disable Powersaving (Screen Off).
 7. Run 'shell:startup', and copy the start.bat from the iso into the startup folder.
+8. Add ENVs as follows :
+
+    ClassPath C:\Program Files\Java\jdk-11.0.2\lib
+    
+    Add to Path :
+        C:\Program Files\Java\jdk-11.0.2\bin
+        C:\Users\User\Desktop\Selenium
+
+9. Restart once more, and open internet explorer, update settings, the firewall when requested, then shut it down.
+ 
+    2.2G    /Users/user/VirtualBox VMs/Windows 10 Base
 
 Now, your VM should be ready and auto start Selenium. Note the IP of the Server, once it start up, and you can proceede to test.
 

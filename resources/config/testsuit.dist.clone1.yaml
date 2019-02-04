@@ -1,6 +1,9 @@
 start:
     servers:
-        - '192.168.56.100'
+        - '192.168.56.101'
+    proxy:
+        ip: '192.168.56.1'
+        port: '8080'
     page: 'https://www.bing.com/search?q=selenium'
     elements: 
         - '//*[@id="b_results"]/li[13]/nav/ul/li[7]/a'

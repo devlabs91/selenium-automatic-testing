@@ -37,14 +37,14 @@ class Config {
     }
     
     public function hasConfigClone( $name ) {
-        foreach($this->getClones() AS $clone) {
+        foreach($this->getConfigClones() AS $clone) {
             if( $clone->getName() == $name ) { return true; }
         }
         return false;
     }
 
     public function getConfigClone( $name ) {
-        foreach($this->getClones() AS $clone) {
+        foreach($this->getConfigClones() AS $clone) {
             if( $clone->getName() == $name ) { return $clone; }
         }
         return null;

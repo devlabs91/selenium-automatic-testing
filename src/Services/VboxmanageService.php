@@ -39,7 +39,10 @@ class VboxmanageService {
         }
         
         if( !$this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() ) ) {
-            throw new \Exception( 'Source VM Snapshot "'.$this->vbConfig->getSourceSnapshotName().'" not found', 404 );
+            $this->vmService->takeSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() );
+            if( !$this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() ) ) {
+                throw new \Exception( 'Source VM Snapshot "'.$this->vbConfig->getSourceSnapshotName().'" not found', 404 );
+            }
         }
         
         return $this;
@@ -70,11 +73,11 @@ class VboxmanageService {
     }
     
     public function startClones( $name, $start ) {
-        foreach( $this->vbConfig->getSpawn() AS $cloneName ) {
-            if( $start=='all' || $start == $cloneName ) {
-                $clone = $this->findClone( $cloneName );
+        foreach( $this->vbConfig->getConfigClones() AS $clone ) {
+            if( ($start=='all' && in_array( $clone->getName(), $this->vbConfig->getSpawn() ) ) 
+                || $start == $clone->getName() ) {
                 if(!$clone) {
-                    throw new \Exception( 'Could not find configuration for clone by name "'.$cloneName.'"', 404 );
+                    throw new \Exception( 'Could not find configuration for clone by name "'.$start.'"', 404 );
                 }
                 $this->startClone( $name, $clone );
             }
