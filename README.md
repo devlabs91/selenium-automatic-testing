@@ -1,23 +1,45 @@
-# selenium-automatic-testing
 Selenium Automatic Testing
+==========================
 
 This is a sandbox starter-kit for automatic testing using Selenium.
 
-resources/
-    IEDriverServer.exe
-    selenium-server-standalone-3.8.1.jar
+resources/files/
+    Selenium/
+        geckodriver.exe
+        IEDriverServer.exe
+        MicrosoftWebDriver.exe
+        selenium-server-standalone-3.8.1.jar
+    start.bat
+
+Prepare to create a iso disk image by downloading Java JDK 11.0.2 & Firefox Setup 65.0.
+
+How to create a iso disk image if needed on osx :
+
+    Use Diskutil to create the Master.cdr of the folder with all the files, then run the following :
+        hdiutil makehybrid -iso -joliet -o Master.iso Master.cdr
+
+Setup
+-----
 
 Quick setup guide for running Selenium on Windows 10 in virtualbox.
 
 1. Download and install latest version of virtualbox for your OS.
-2. Download and install the Windows 10 iso available from microsoft (Create account "User", without any password).
-3. Download resources/* into a folder on the Desktop called "Selenium".
-4. Download and install Java JDK 11.0.2.
+2. Download and the Windows 10 iso available from microsoft.
+2.1. Create a virtual machine named 'Windows 10 Master'.
+2.2. Create a host only interface, and make sure to set 'Windows 10 Master' to use this interface only.
+3. Install Windows 10, make sure to create account "User", without any password.
+4. Attach the 'resources/iso/selenium.iso'
+3. Copy the Selenium folder in the iso to the Desktop.
+4. Download and Install Java JDK 11.0.2 from the iso.
+4.1. Optional, install Firefox Setup 65.0 from the iso.
 5. Disable UAC
 6. Disable Powersaving (Screen Off).
-7. Run 'shell:startup', and copy the start.bat into the startup folder.
+7. Run 'shell:startup', and copy the start.bat from the iso into the startup folder.
 
 Now, your VM should be ready and auto start Selenium. Note the IP of the Server, once it start up, and you can proceede to test.
+
+Database
+--------
 
 Configure a mysql database called : selenium
 make sure to use collation: utf8mb4_unicode_ci
@@ -33,17 +55,15 @@ Initialize the database by :
 
 ./bin/console doctrine:schema:update --force
 
-Create a start.yaml file with minimum configuration :
+Update files with any changes needed :
 
-start:
-    servers:
-        - '192.168.56.100'
-    page: 'https://www.bing.com/search?q=selenium'
-    elements: 
-        - '//*[@id="b_results"]/li[13]/nav/ul/li[7]/a'
-        - '//*[@id="b_results"]/li[14]/nav/ul/li[8]/a'
+    resources/config/config.dist.yml
+    resources/config/testsuite.dist.clone1.yml
+    
+Then run :
 
-./bin/console app:start start.yaml
+./bin/console app:vboxmanage resources/config/config.dist.yml --spawn
+./bin/console app:vboxmanage resources/config/config.dist.yml --start=all
 
 This should launch the app, and open https://www.bing.com in IE, you should see a log in your database.
 

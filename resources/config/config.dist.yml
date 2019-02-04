@@ -1,0 +1,23 @@
+source:
+    name: 'Windows 10 Master'
+    snapshot:
+        name: 'Windows 10 Snapshot'
+spawn:
+    - 'clone1'
+clones:
+    - 
+        name: 'clone1'
+        network: 
+            nic1:
+                attached: 'hostonly'
+                name: 'vboxnet0'
+        start: 'gui'
+        testsuite: 'resources/config/testsuit.dist.clone1.yaml'
+networks:
+    -
+        name: 'vboxnet0'
+        ip: '192.168.56.1'
+        dhcp:
+            ip: '192.168.56.2'
+            lowerip: '192.168.56.100'
+            upperip: '192.168.56.100'

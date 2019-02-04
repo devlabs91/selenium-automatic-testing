@@ -1,0 +1,7 @@
+start:
+    servers:
+        - '192.168.56.100'
+    page: 'https://www.bing.com/search?q=selenium'
+    elements: 
+        - '//*[@id="b_results"]/li[13]/nav/ul/li[7]/a'
+        - '//*[@id="b_results"]/li[14]/nav/ul/li[8]/a'
