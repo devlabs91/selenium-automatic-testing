@@ -13,6 +13,7 @@ use Devlabs91\Daemonrunner\Services\DaemonService;
 
 class StartService {
     
+    public $fileName;
     public $host;
     public $startPage;
     
@@ -34,6 +35,7 @@ class StartService {
         DaemonService::iamalive( 'Service construct' );
         
         $this->doctrine = $doctrine;
+        $this->fileName = $fileName;
         
         $content = file_get_contents( getcwd()."/".$fileName );
         $value = Yaml::parse($content);
@@ -101,10 +103,10 @@ class StartService {
             $views = rand( $this->views['min'], $this->views['max'] );
         }
         while(1) {
-            DaemonService::iamalive( 'runService while' );
             try {
                 $element = $this->findElementByXpath( $this->elements[0] );
                 if($element) {
+                    DaemonService::iamalive( $this->fileName . ' - '.$visited . ' - ' . $views . ' - ' . $this->driver->getCurrentURL() );
                     $this->logPage( $this->driver->getCurrentURL(), $views, $visited );
                     $this->scrollToElement( $element );
                     try {
@@ -121,14 +123,14 @@ class StartService {
                         echo($e->getMessage().PHP_EOL);
                     }
                 } else {
-                    echo("Element not found.");
+                    DaemonService::iamalive( $this->fileName . ' - '.$visited . ' - ' . $views . ' - ' . 'Element not found.' );
                     if( $this->driver ) { $this->driver->close(); }
                     $this->init();
                     $this->getStartPage();
                 }
                 sleep( rand(5,10) );
             } catch (\Throwable $e) {
-                echo($e->getMessage().PHP_EOL);
+                DaemonService::iamalive( $this->fileName . ' - '.$visited . ' - ' . $views . ' - ' . $e->getMessage() );
                 $error++;
                 if($error==3) {
                     if( $this->driver ) { $this->driver->close(); }
