@@ -30,7 +30,7 @@ Quick setup guide for running Selenium on Windows 10 in virtualbox.
 2.3. Install Windows 10, make sure to create account "User", without any password.
     
     8.6G    /Users/user/VirtualBox VMs/Windows 10 Master
-    
+
 2.4. Once installed create a clone that we will use as base called 'Windows 10 Base'.
 
     2.1M    /Users/user/VirtualBox VMs/Windows 10 Base
@@ -50,6 +50,7 @@ Quick setup guide for running Selenium on Windows 10 in virtualbox.
         C:\Program Files\Java\jdk-11.0.2\bin
         C:\Users\User\Desktop\Selenium
 
+9. Remove OneDrive from auto start.
 9. Restart once more, and open internet explorer, update settings, the firewall when requested, then shut it down.
  
     2.2G    /Users/user/VirtualBox VMs/Windows 10 Base
@@ -80,8 +81,14 @@ Update files with any changes needed :
     
 Then run :
 
-./bin/console app:vboxmanage resources/config/config.dist.yml --spawn
-./bin/console app:vboxmanage resources/config/config.dist.yml --start=all
+    ./bin/console app:vboxmanage resources/config/config.dist.yml --init-base
+
+*) This will init the base vm, and you can make any changes needed before freezing it.
+
+After done, test using :
+
+    ./bin/console app:vboxmanage resources/config/config.dist.yml --spawn
+    ./bin/console app:vboxmanage resources/config/config.dist.yml --start=all
 
 This should launch the app, and open https://www.bing.com in IE, you should see a log in your database.
 

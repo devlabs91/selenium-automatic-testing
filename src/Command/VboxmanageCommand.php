@@ -32,6 +32,7 @@ class VboxmanageCommand extends Command
             ->addOption('stop', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
             ->addOption('remove', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
             ->addOption('spawn')
+            ->addOption('init-base')
             ->addOption('respawn', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
             ;
     }
@@ -43,7 +44,11 @@ class VboxmanageCommand extends Command
         
         if ($arg1) {
             $io->note(sprintf('You passed an argument: %s', $arg1));
-            (new VboxmanageService( $this->doctrine, $arg1 ))->runService( $input->getOption('start'), $input->getOption('stop'), $input->getOption('remove'), $input->getOption('spawn'), $input->getOption('respawn') );
+            if( $input->getOption('init-base') ) {
+                (new VboxmanageService( $this->doctrine, $arg1 ))->initBase();
+            } else {
+                (new VboxmanageService( $this->doctrine, $arg1 ))->runService( $input->getOption('start'), $input->getOption('stop'), $input->getOption('remove'), $input->getOption('spawn'), $input->getOption('respawn') );
+            }
         }
 
         $io->success('done.');

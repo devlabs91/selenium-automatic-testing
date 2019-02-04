@@ -38,17 +38,39 @@ class VboxmanageService {
             throw new \Exception( 'Source VM "'.$this->vbConfig->getSourceName().'" not found', 404 );
         }
         
+        return $this;
+    }
+    
+    public function initBase( ) { 
+        
+        if( $this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName() ), $this->vbConfig->getSourceSnapshotName() ) ) { 
+            $this->vmService->deleteSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName() ) , $this->vmService->getSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() ) );
+            if( $this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName() ), $this->vbConfig->getSourceSnapshotName() ) ) {
+                throw new \Exception( 'Could not remove VM Snapshot "'.$this->vbConfig->getSourceSnapshotName().'"', 200 );
+            }
+        }
+        
+        foreach( $this->vbConfig->getSourceNetwork() AS $nic => $config ) {
+            $this->respawnCloneNetwork( $nic, $config );
+            if( $config['attached'] == 'hostonly' ) {
+                $this->vmService->configHostonlyVm( $this->vmService->getVm( $this->vbConfig->getSourceName() ), $nic, $config['name'] );
+            }
+        }
+
+        $initConfig = $this->vbConfig->getSourceInit();
+        $this->vmService->startVm( $this->vmService->getVm( $this->vbConfig->getSourceName() ), $initConfig['start'] );
+        $this->testsuiteServie->start( $initConfig['testsuite'] );
+        
+    }
+    
+    public function runService( $start, $stop, $remove, $spawn, $respawn ) {
+
         if( !$this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() ) ) {
             $this->vmService->takeSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() );
             if( !$this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() ) ) {
                 throw new \Exception( 'Source VM Snapshot "'.$this->vbConfig->getSourceSnapshotName().'" not found', 404 );
             }
         }
-        
-        return $this;
-    }
-    
-    public function runService( $start, $stop, $remove, $spawn, $respawn ) {
         
         if( $start ) {
             $this->respawnAllNetworks( $this->vbConfig->getNetworks() );

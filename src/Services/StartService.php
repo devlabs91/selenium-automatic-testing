@@ -9,6 +9,7 @@ use Facebook\WebDriver\Remote\RemoteWebElement;
 use Symfony\Component\Yaml\Yaml;
 use App\Entity\Log;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Devlabs91\Daemonrunner\Services\DaemonService;
 
 class StartService {
     
@@ -29,6 +30,8 @@ class StartService {
     public $doctrine;
     
     public function __construct( ManagerRegistry $doctrine, $fileName ) {
+        
+        DaemonService::iamalive( 'Service construct' );
         
         $this->doctrine = $doctrine;
         
@@ -75,7 +78,7 @@ class StartService {
             try {
                 $this->driver = RemoteWebDriver::create( $this->host, $dc, 3600000, 120000 );
             } catch ( \Exception $e ) {
-                echo($e->getMessage());
+                DaemonService::iamalive( $e->getMessage() );
             }
             if($this->driver) { break; }
             sleep(2);
@@ -88,6 +91,8 @@ class StartService {
     }
 
     public function runService() {
+        DaemonService::iamalive( 'runService' );
+        
         $this->init();
         $this->getStartPage();
         
@@ -96,6 +101,7 @@ class StartService {
             $views = rand( $this->views['min'], $this->views['max'] );
         }
         while(1) {
+            DaemonService::iamalive( 'runService while' );
             try {
                 $element = $this->findElementByXpath( $this->elements[0] );
                 if($element) {

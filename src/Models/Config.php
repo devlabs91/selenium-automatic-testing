@@ -28,6 +28,14 @@ class Config {
         return $this->source['snapshot']['name'];
     }
     
+    public function getSourceNetwork() {
+        return $this->source['init']['network'];
+    }
+
+    public function getSourceInit() {
+        return $this->source['init'];
+    }
+    
     public function getSpawn() {
         return $this->spawn;
     }

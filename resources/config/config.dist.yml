@@ -2,10 +2,11 @@ source:
     name: 'Windows 10 Base'
     snapshot:
         name: 'Windows 10 Snapshot'
-    network: 
-        nic1:
-            attached: 'hostonly'
-            name: 'vboxnet0'
+    init:
+        network: 
+            nic1:
+                attached: 'hostonly'
+                name: 'vboxnet0'
         start: 'gui'
         testsuite: 'resources/config/testsuit.dist.clone1.yaml'
 spawn:
