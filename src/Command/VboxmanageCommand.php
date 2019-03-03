@@ -10,6 +10,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use App\Models\Options;
 
 class VboxmanageCommand extends Command
 {
@@ -28,12 +29,16 @@ class VboxmanageCommand extends Command
         $this
             ->setDescription('Vboxmanage command')
             ->addArgument('config', InputArgument::REQUIRED, 'Yaml Configuration File')
-            ->addOption('start', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
-            ->addOption('stop', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
-            ->addOption('remove', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
+            ->addOption('clones', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
+            ->addOption('start')
+            ->addOption('stop')
+            ->addOption('remove')
             ->addOption('spawn')
             ->addOption('init-base')
-            ->addOption('respawn', null, InputOption::VALUE_OPTIONAL, 'all, {clone_name}', null)
+            ->addOption('respawn')
+            ->addOption('start-service')
+            ->addOPtion('stop-service')
+            ->addOPtion('exit-service')
             ;
     }
 
@@ -47,7 +52,7 @@ class VboxmanageCommand extends Command
             if( $input->getOption('init-base') ) {
                 (new VboxmanageService( $this->doctrine, $arg1 ))->initBase();
             } else {
-                (new VboxmanageService( $this->doctrine, $arg1 ))->runService( $input->getOption('start'), $input->getOption('stop'), $input->getOption('remove'), $input->getOption('spawn'), $input->getOption('respawn') );
+                (new VboxmanageService( $this->doctrine, $arg1 ))->runService( (new Options())->deserialize( $input->getOptions() ) );
             }
         }
 

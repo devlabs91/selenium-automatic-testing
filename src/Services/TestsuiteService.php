@@ -20,7 +20,7 @@ class TestsuiteService {
     }
     
     public function stop( $filename ) {
-        DaemonService::stop( $filename );
+        if( DaemonService::isRunning( $filename ) ) { DaemonService::stop( $filename ); }
     }
     
     public function exit( $filename ) {

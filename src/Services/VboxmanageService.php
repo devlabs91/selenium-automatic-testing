@@ -8,6 +8,7 @@ use Symfony\Component\Yaml\Yaml;
 use App\Models\Config;
 use Devlabs91\Vboxmanage\Services\VmService;
 use App\Models\ConfigClone;
+use App\Models\Options;
 
 class VboxmanageService {
     
@@ -63,7 +64,7 @@ class VboxmanageService {
         
     }
     
-    public function runService( $start, $stop, $remove, $spawn, $respawn ) {
+    public function runService( Options $options ) {
 
         if( !$this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() ) ) {
             $this->vmService->takeSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() );
@@ -72,18 +73,26 @@ class VboxmanageService {
             }
         }
         
-        if( $start ) {
-            $this->respawnAllNetworks( $this->vbConfig->getNetworks() );
-            return $this->startClones( $this->vbConfig->getSourceName(), $start );
-        } else if( $stop ) {
-            return $this->stopClones( $stop );
-        } else if( $remove ) {
-            return $this->removeClones( $remove );
-        } else if( $respawn ) {
-            return $this->respawnClones( $this->vbConfig->getSourceName(), $respawn );
-        } else if( $spawn ) {
-            $this->spawnClones( $this->vbConfig->getSourceName() );
+        if( $options->getStart() ) {
+            $this->startClones( $this->vbConfig->getSourceName(), $options );
+        } else if( $options->getStop() ) {
+            $this->stopClones( $options );
+        } else if( $options->getRemove() ) {
+            $this->removeClones( $options );
+        } else if( $options->getRespawn() ) {
+            $this->respawnClones( $this->vbConfig->getSourceName(), $options );
+        } else if( $options->getSpawn() ) {
+            $this->spawnClones( $this->vbConfig->getSourceName(), $options );
         }
+        
+        if( $options->getStartService() ) {
+            $this->toogleStartServices( $options, true );
+        } else if( $options->getStopService() ) {
+            $this->toogleStartServices( $options, false );
+        } else if( $options->getExitService() ) {
+            $this->exitServices( $options);
+        }
+            
         
     }
     
@@ -93,13 +102,40 @@ class VboxmanageService {
         }
         return $this->vbConfig->getConfigClone( $name );
     }
-    
-    public function startClones( $name, $start ) {
+
+    public function exitServices( Options $options ) {
         foreach( $this->vbConfig->getConfigClones() AS $clone ) {
-            if( ($start=='all' && in_array( $clone->getName(), $this->vbConfig->getSpawn() ) ) 
-                || $start == $clone->getName() ) {
+            if( $options->selectedClone( $clone->getName() ) ) { $this->exitService( $clone ); }
+        }
+    }
+    
+    public function exitService( ConfigClone $clone ) {
+        $this->testsuiteServie->exit( $clone->getTestsuite() );
+        echo("Exited ".$clone->getTestsuite().PHP_EOL);
+    }
+    
+    public function toogleStartServices( Options $options, $toogle ) {
+        foreach( $this->vbConfig->getConfigClones() AS $clone ) {
+            if( $options->selectedClone( $clone->getName() ) ) { $this->toogleStartService( $clone, $toogle ); }
+        }
+    }
+    
+    public function toogleStartService( ConfigClone $clone, $toogle ) {
+        if( $toogle ) {
+            $this->testsuiteServie->start( $clone->getTestsuite() );
+        } else {
+            $this->testsuiteServie->stop( $clone->getTestsuite() );
+        }
+    }
+    
+    public function startClones( $name, Options $options ) {
+        if( $options->getClones()=='all') {
+            $this->respawnAllNetworks( $this->vbConfig->getNetworks() );
+        }
+        foreach( $this->vbConfig->getConfigClones() AS $clone ) {
+            if( ($options->getClones()=='all' && in_array( $clone->getName(), $this->vbConfig->getSpawn() ) ) || $options->getClones() == $clone->getName() ) {
                 if(!$clone) {
-                    throw new \Exception( 'Could not find configuration for clone by name "'.$start.'"', 404 );
+                    throw new \Exception( 'Could not find configuration for clone by name "'.$options->getClones().'"', 404 );
                 }
                 $this->startClone( $name, $clone );
             }
@@ -109,12 +145,11 @@ class VboxmanageService {
     public function startClone( $name, ConfigClone $clone ) {
         if( ! $this->vmService->hasVm( $clone->getName() ) ) { $this->respawnClone( $name, $clone ); }
         $this->vmService->startVm( $this->vmService->getVm( $clone->getName() ), $clone->getStart() );
-        $this->testsuiteServie->start( $clone->getTestsuite() );
     }
     
-    public function stopClones( $stop ) {
+    public function stopClones( Options $options ) { 
         foreach( $this->vbConfig->getConfigClones() AS $clone ) {
-            if( $stop == 'all' || $stop == $clone->getName() ) {
+            if( $options->getClones() == 'all' || $options->getClones() == $clone->getName() ) {
                 if( $this->vmService->hasVm( $clone->getName() ) ) {
                     $this->stopClone( $clone );
                 }
@@ -127,9 +162,9 @@ class VboxmanageService {
         $this->vmService->stopVm( $this->vmService->getVm( $clone->getName() ) );
     }
     
-    public function removeClones( $remove ) {
+    public function removeClones( Options $options ) {
         foreach($this->vbConfig->getConfigClones() AS $clone) {
-            if($remove == 'all' || $remove == $clone->getName() ) {
+            if($options->getClones() == 'all' || $options->getClones() == $clone->getName() ) {
                 if( $this->vmService->hasVm( $clone->getName() ) ) {
                     $this->stopClone( $clone );
                     sleep(5);
@@ -146,18 +181,26 @@ class VboxmanageService {
         }
     }
     
-    public function spawnClones( $name ) {
-        $this->respawnAllNetworks( $this->vbConfig->getNetworks() );
+    public function spawnClones( $name, Options $options ) {
+        if( $options->getClones()=='all') {
+            $this->respawnAllNetworks( $this->vbConfig->getNetworks() );
+        }
         foreach($this->vbConfig->getSpawn() AS $cloneName) {
             $clone = $this->findClone( $cloneName );
-            $this->respawnClone( $name, $clone );
+            if( $clone && ( $options->getClones() == 'all' || $options->getClones() == $clone->getName() ) ) {
+                $this->spawnClone( $name, $clone );
+            }
         }
     }
     
-    public function respawnClones( $name, $respawn ) {
+    public function spawnClone( $name, $clone ) {
+        $this->respawnClone( $name, $clone );
+    }
+    
+    public function respawnClones( $name, Options $options ) {
         foreach($this->vbConfig->getSpawn() AS $cloneName) {
-            if( $respawn=='all' || $cloneName == $respawn ) { 
-                $clone = $this->findClone( $cloneName );
+            $clone = $this->findClone( $cloneName );
+            if( $clone && ( $options->getClones()=='all' || $options->getClones() == $clone->getName() ) ) { 
                 $this->respawnClone( $name, $clone);
             }
         }
