@@ -2,9 +2,6 @@
 
 namespace App\Services;
 
-use Doctrine\Common\Persistence\ManagerRegistry;
-
-use Symfony\Component\Yaml\Yaml;
 use App\Models\Config;
 use Devlabs91\Vboxmanage\Services\VmService;
 use App\Models\ConfigClone;
@@ -12,88 +9,52 @@ use App\Models\Options;
 
 class VboxmanageService {
     
-    /** @var ManagerRegistry */
-    public $doctrine;
-    
     /** @var Config */
     public $vbConfig;
     
     /** @var VmService */
     public $vmService;
     
-    /** @var TestsuiteService */
-    public $testsuiteServie;
-    
-    public function __construct( ManagerRegistry $doctrine, $fileName ) {
-        
-        $this->doctrine = $doctrine;
-        
-        $content = file_get_contents( getcwd()."/".$fileName );
-        $this->vbConfig = new Config( Yaml::parse($content) );
-        
+    public function __construct( Config $vbConfig ) {
+        $this->vbConfig = $vbConfig;
         $this->vmService = new VmService();
-
-        $this->testsuiteServie = new TestsuiteService($doctrine);
-        
         if( !$this->vmService->hasVm( $this->vbConfig->getSourceName() ) ) {
             throw new \Exception( 'Source VM "'.$this->vbConfig->getSourceName().'" not found', 404 );
         }
-        
         return $this;
     }
     
-    public function initBase( ) { 
-        
-        if( $this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName() ), $this->vbConfig->getSourceSnapshotName() ) ) { 
-            $this->vmService->deleteSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName() ) , $this->vmService->getSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() ) );
-            if( $this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName() ), $this->vbConfig->getSourceSnapshotName() ) ) {
-                throw new \Exception( 'Could not remove VM Snapshot "'.$this->vbConfig->getSourceSnapshotName().'"', 200 );
+    public function takeSnapshot( $sourceName, $sourceSnapshotName ) {
+        if( !$this->vmService->hasSnapshot( $this->vmService->getVm( $sourceName ), $sourceSnapshotName ) ) {
+            $this->vmService->takeSnapshot( $this->vmService->getVm( $sourceName ), $sourceSnapshotName );
+            if( !$this->vmService->hasSnapshot( $this->vmService->getVm( $sourceName ), $sourceSnapshotName ) ) {
+                return false;
             }
         }
-        
-        foreach( $this->vbConfig->getSourceNetwork() AS $nic => $config ) {
-            $this->respawnCloneNetwork( $nic, $config );
-            if( $config['attached'] == 'hostonly' ) {
-                $this->vmService->configHostonlyVm( $this->vmService->getVm( $this->vbConfig->getSourceName() ), $nic, $config['name'] );
-            }
-        }
-
-        $initConfig = $this->vbConfig->getSourceInit();
-        $this->vmService->startVm( $this->vmService->getVm( $this->vbConfig->getSourceName() ), $initConfig['start'] );
-        $this->testsuiteServie->start( $initConfig['testsuite'] );
-        
+        return true;
     }
     
-    public function runService( Options $options ) {
-
-        if( !$this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() ) ) {
-            $this->vmService->takeSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() );
-            if( !$this->vmService->hasSnapshot( $this->vmService->getVm( $this->vbConfig->getSourceName( ) ), $this->vbConfig->getSourceSnapshotName() ) ) {
-                throw new \Exception( 'Source VM Snapshot "'.$this->vbConfig->getSourceSnapshotName().'" not found', 404 );
+    public function deleteSnapshot( $sourceName, $sourceSnapshotName ) {
+        if( $this->vmService->hasSnapshot( $this->vmService->getVm( $sourceName ), $sourceSnapshotName ) ) {
+            $this->vmService->deleteSnapshot( $this->vmService->getVm( $sourceName ) , $this->vmService->getSnapshot( $this->vmService->getVm( $sourceName ), $sourceSnapshotName ) );
+            if( $this->vmService->hasSnapshot( $this->vmService->getVm( $sourceName ), $sourceSnapshotName ) ) {
+                return false;
             }
         }
-        
-        if( $options->getStart() ) {
-            $this->startClones( $this->vbConfig->getSourceName(), $options );
-        } else if( $options->getStop() ) {
-            $this->stopClones( $options );
-        } else if( $options->getRemove() ) {
-            $this->removeClones( $options );
-        } else if( $options->getRespawn() ) {
-            $this->respawnClones( $this->vbConfig->getSourceName(), $options );
-        } else if( $options->getSpawn() ) {
-            $this->spawnClones( $this->vbConfig->getSourceName(), $options );
+        return true;
+    }
+    
+    public function respawnCloneNetworks( Config $vbConfig ) {
+        foreach( $vbConfig->getSourceNetwork() AS $nic => $config ) {
+            $this->respawnCloneNetwork( $nic, $config );
+            if( $config['attached'] == 'hostonly' ) {
+                $this->vmService->configHostonlyVm( $this->vmService->getVm( $vbConfig->getSourceName() ), $nic, $config['name'] );
+            }
         }
-        
-        if( $options->getStartService() ) {
-            $this->toogleStartServices( $options, true );
-        } else if( $options->getStopService() ) {
-            $this->toogleStartServices( $options, false );
-        } else if( $options->getExitService() ) {
-            $this->exitServices( $options);
-        }
-            
-        
+    }
+    
+    public function startVm( $sourceName, $start ) {
+        $this->vmService->startVm( $this->vmService->getVm( $sourceName ), $start );
     }
     
     public function findClone( $name ) {
@@ -103,31 +64,6 @@ class VboxmanageService {
         return $this->vbConfig->getConfigClone( $name );
     }
 
-    public function exitServices( Options $options ) {
-        foreach( $this->vbConfig->getConfigClones() AS $clone ) {
-            if( $options->selectedClone( $clone->getName() ) ) { $this->exitService( $clone ); }
-        }
-    }
-    
-    public function exitService( ConfigClone $clone ) {
-        $this->testsuiteServie->exit( $clone->getTestsuite() );
-        echo("Exited ".$clone->getTestsuite().PHP_EOL);
-    }
-    
-    public function toogleStartServices( Options $options, $toogle ) {
-        foreach( $this->vbConfig->getConfigClones() AS $clone ) {
-            if( $options->selectedClone( $clone->getName() ) ) { $this->toogleStartService( $clone, $toogle ); }
-        }
-    }
-    
-    public function toogleStartService( ConfigClone $clone, $toogle ) {
-        if( $toogle ) {
-            $this->testsuiteServie->start( $clone->getTestsuite() );
-        } else {
-            $this->testsuiteServie->stop( $clone->getTestsuite() );
-        }
-    }
-    
     public function startClones( $name, Options $options ) {
         if( $options->getClones()=='all') {
             $this->respawnAllNetworks( $this->vbConfig->getNetworks() );
@@ -158,7 +94,6 @@ class VboxmanageService {
     }
 
     public function stopClone( ConfigClone $clone ) {
-        $this->testsuiteServie->stop( $clone->getTestsuite() );
         $this->vmService->stopVm( $this->vmService->getVm( $clone->getName() ) );
     }
     

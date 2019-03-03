@@ -2,7 +2,6 @@
 
 namespace App\Command;
 
-use App\Services\VboxmanageService;
 use Doctrine\Common\Persistence\ManagerRegistry;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -11,10 +10,11 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use App\Models\Options;
+use App\Services\MainService;
 
-class VboxmanageCommand extends Command
+class MainCommand extends Command
 {
-    protected static $defaultName = 'app:vboxmanage';
+    protected static $defaultName = 'app:main';
 
     /** @var ManagerRegistry */
     public $doctrine;
@@ -50,9 +50,9 @@ class VboxmanageCommand extends Command
         if ($arg1) {
             $io->note(sprintf('You passed an argument: %s', $arg1));
             if( $input->getOption('init-base') ) {
-                (new VboxmanageService( $this->doctrine, $arg1 ))->initBase();
+                (new MainService( $this->doctrine, $arg1 ))->initBase();
             } else {
-                (new VboxmanageService( $this->doctrine, $arg1 ))->runService( (new Options())->deserialize( $input->getOptions() ) );
+                (new MainService( $this->doctrine, $arg1 ))->runService( (new Options())->deserialize( $input->getOptions() ) );
             }
         }
 
